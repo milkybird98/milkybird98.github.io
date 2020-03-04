@@ -23,7 +23,7 @@ install:
 
 before_script:
   - export TZ='Asia/Shanghai'
-  - chmod +x _travis.sh
+  - chmod +x .travis.sh
 
 script:
   - hexo clean && hexo g
@@ -33,7 +33,7 @@ after_success:
  # - for i in $(seq 1 $LAST_BUILD_NUMBER ); do  travis logs $i --delete --force ; done
 
 after_script:
-  - ./_travis.sh
+  - ./.travis.sh
 
 # E: Build LifeCycle
 

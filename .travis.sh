@@ -32,13 +32,14 @@ function default(){
 
 cat <<EOF >> README.md 
 # 牛乳工造
+[![Build Status](https://travis-ci.org/milkybird98/milkybird98.github.io.svg?branch=hexo)](https://travis-ci.org/milkybird98/milkybird98.github.io)
 EOF
 
   git init
   git config user.name "milkybird98"
   git config user.email "milkybird98@outlook.com"
   git add .
-  git commit -m "Build by Travis CI"
+  git commit -m "Build by Travis CI `date`"
   git push --force --quiet "https://${GH_TOKEN}@${GH_REF}" master:master
 } 
 
