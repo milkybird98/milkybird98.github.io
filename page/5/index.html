@@ -7,13 +7,13 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
-<title>Archives - 牛乳工造</title>
+<title>牛乳工造</title>
 
 
     <meta name="description" content="better milk, better future">
 <meta property="og:type" content="website">
 <meta property="og:title" content="牛乳工造">
-<meta property="og:url" content="https://milkybird98.github.io/archives/index.html">
+<meta property="og:url" content="https://milkybird98.github.io/page/5/index.html">
 <meta property="og:site_name" content="牛乳工造">
 <meta property="og:description" content="better milk, better future">
 <meta property="og:locale" content="en_US">
@@ -91,7 +91,7 @@
                 <a class="navbar-item"
                 href="/">Home</a>
                 
-                <a class="navbar-item is-active"
+                <a class="navbar-item"
                 href="/archives">Archives</a>
                 
                 <a class="navbar-item"
@@ -130,172 +130,106 @@
         <div class="container">
             <div class="columns">
                 <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main">
+    
+<div class="card">
+    
+    <div class="card-content article ">
         
-<div class="card widget">
-    <div class="card-content">
-        <h3 class="tag is-link">
-        2020
-        </h3>
-        <div class="timeline">
-        
-            <article class="media">
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2018-03-04T07:43:55.000Z">2018-03-04</time>
                 
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2020-03-04T17:30:34.000Z">2020-03-05</time>
-                        <a href="/2020/03/05/20%E6%98%A5%E9%9A%8F%E6%83%B3/" class="title has-link-black-ter is-size-6 has-text-weight-normal">20春随想</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/ELSE/">ELSE</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/TECH/">TECH</a>
                 </div>
-            </article>
-        
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    7 minutes read (About 987 words)
+                </span>
+                
+                
+            </div>
         </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                <a class="has-link-black-ter" href="/2018/03/04/lcd-driver/">STM32驱动LCD屏幕</a>
+            
+        </h1>
+        <div class="content">
+            <p>本文中使用的LCD驱动芯片为ili9341，下文中简称为驱动芯片。<br>官方的PDF就不摆上来了，自己去这找找就行了<a href="https://www.google.com/ncr">Google</a>。</p>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><ul>
+<li>MCU为STM32F103ZE，主频72Mhz，使用Spi与驱动芯片通讯，Spi时钟频率为18Mhz。</li>
+<li>鉴于驱动芯片可以设定显示窗口（即改写选定部分的显存数据，如将窗口设定为x=20;y=30;宽=50;高=70）,可以使用DMA来提高数据传输效率，尤其是在显示文字的过程中，可以直接将文字对于的点阵转换为一个n*n的图片，再一次性的发送给驱动芯片。</li>
+<li>但是使用时需要注意检测前一次的DMA发送是否已经完成，否则会出现数据传输不完整的错误。</li>
+<li>使用PB1，2引脚作为驱动芯片的DC引脚和RST引脚。</li>
+</ul>
+<h1 id="底层IO函数"><a href="#底层IO函数" class="headerlink" title="底层IO函数"></a>底层IO函数</h1><ul>
+<li>驱动芯片在写入寄存器时不再明显的区分指令寄存器和显存寄存器，写入指令不在是“索引+对于寄存器的数据”，而改为“指令+[参数/数据]”的格式，简而言之，无论是修改设置还是发送图像数据，其实都是一条指令以及相应的数据。</li>
+<li>在发送指令时，先应将DC脚拉低，在通过Spi发送两个字节的数据，随后将RS脚拉高即可。</li>
+<li>发送数据较为简单，在指定寄存器索引后直接在Spi上传出数据即可。</li>
+<li>同时应注意到，有些指令是没有数据的，如“开始显示画面”，有些指令的数据量则十分巨大，如“写入显存”，这也是“索引+数据”和“指令+[参数/数据]”模式最大的区别，即后者发送的指令本身的功能就不仅仅只是指定寄存器，亦可以修改某些数据。</li>
+<li>如果需要硬重启需要将RST引脚从高电位拉低，再拉高，同时应当适当加入延时。</li>
+</ul>
+<hr>
+<p>发送指令</p>
+<figure class="highlight cxx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">writeCommand</span><span class="params">(<span class="keyword">uint8_t</span> cmd)</span></span>&#123;</span><br><span class="line">HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_RESET);</span><br><span class="line">HAL_SPI_Transmit(&amp;hspi1,&amp;cmd,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>发送数据</p>
+<figure class="highlight cxx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">spiWrite</span><span class="params">(<span class="keyword">uint8_t</span> data)</span></span>&#123;</span><br><span class="line">HAL_SPI_Transmit(&amp;hspi1,&amp;data,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>重启</p>
+<figure class="highlight cxx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">lcdRestart</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</span><br><span class="line">HAL_GPIO_WritePin(GPIOB,GPIO_PIN_2,GPIO_PIN_SET);</span><br><span class="line">HAL_Delay(<span class="number">100</span>);</span><br><span class="line">HAL_GPIO_WritePin(GPIOB,GPIO_PIN_2,GPIO_PIN_RESET);</span><br><span class="line">HAL_Delay(<span class="number">100</span>);</span><br><span class="line">HAL_GPIO_WritePin(GPIOB,GPIO_PIN_2,GPIO_PIN_SET);</span><br><span class="line">HAL_Delay(<span class="number">200</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h1><p>初始化过程参见PDF，主要包括电源控制，内存访问控制和屏幕刷新相关设置的初始化（暂时先鸽了），其中伽马矫正部分需LCD屏幕供应者提供相应的参数（或者随便输一点）。</p>
+<hr>
+<p>初始化</p>
+<figure class="highlight cxx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br></pre></td><td class="code"><pre><span class="line">writeCommand(<span class="number">0xEF</span>);</span><br><span class="line">spiWrite(<span class="number">0x03</span>);</span><br><span class="line">spiWrite(<span class="number">0x80</span>);</span><br><span class="line">spiWrite(<span class="number">0x02</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xCF</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0XC1</span>);</span><br><span class="line">spiWrite(<span class="number">0X30</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xED</span>);</span><br><span class="line">spiWrite(<span class="number">0x64</span>);</span><br><span class="line">spiWrite(<span class="number">0x03</span>);</span><br><span class="line">spiWrite(<span class="number">0X12</span>);</span><br><span class="line">spiWrite(<span class="number">0X81</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xE8</span>);</span><br><span class="line">spiWrite(<span class="number">0x85</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x78</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xCB</span>);</span><br><span class="line">spiWrite(<span class="number">0x39</span>);</span><br><span class="line">spiWrite(<span class="number">0x2C</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x34</span>);</span><br><span class="line">spiWrite(<span class="number">0x02</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xF7</span>);</span><br><span class="line">spiWrite(<span class="number">0x20</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xEA</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_PWCTR1);  <span class="comment">//Power control</span></span><br><span class="line">spiWrite(<span class="number">0x23</span>);  <span class="comment">//VRH[5:0]</span></span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_PWCTR2);  <span class="comment">//Power control</span></span><br><span class="line">spiWrite(<span class="number">0x10</span>);  <span class="comment">//SAP[2:0];BT[3:0]</span></span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_VMCTR1);  <span class="comment">//VCM control</span></span><br><span class="line">spiWrite(<span class="number">0x3e</span>);</span><br><span class="line">spiWrite(<span class="number">0x28</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_VMCTR2);  <span class="comment">//VCM control2</span></span><br><span class="line">spiWrite(<span class="number">0x86</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_MADCTL);  <span class="comment">//Memory Access Control</span></span><br><span class="line">spiWrite(<span class="number">0x48</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_VSCRSADD);  <span class="comment">//Vertical scroll</span></span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);  <span class="comment">//Zero</span></span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_PIXFMT);</span><br><span class="line">spiWrite(<span class="number">0x55</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_FRMCTR1);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x18</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_DFUNCTR);  <span class="comment">//Display Function Control</span></span><br><span class="line">spiWrite(<span class="number">0x08</span>);</span><br><span class="line">spiWrite(<span class="number">0x82</span>);</span><br><span class="line">spiWrite(<span class="number">0x27</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(<span class="number">0xF2</span>);  <span class="comment">//3Gamma Function Disable</span></span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_GAMMASET);  <span class="comment">//Gamma curve selected</span></span><br><span class="line">spiWrite(<span class="number">0x01</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_GMCTRP1);  <span class="comment">//Set Gamma</span></span><br><span class="line">spiWrite(<span class="number">0x0F</span>);</span><br><span class="line">spiWrite(<span class="number">0x31</span>);</span><br><span class="line">spiWrite(<span class="number">0x2B</span>);</span><br><span class="line">spiWrite(<span class="number">0x0C</span>);</span><br><span class="line">spiWrite(<span class="number">0x0E</span>);</span><br><span class="line">spiWrite(<span class="number">0x08</span>);</span><br><span class="line">spiWrite(<span class="number">0x4E</span>);</span><br><span class="line">spiWrite(<span class="number">0xF1</span>);</span><br><span class="line">spiWrite(<span class="number">0x37</span>);</span><br><span class="line">spiWrite(<span class="number">0x07</span>);</span><br><span class="line">spiWrite(<span class="number">0x10</span>);</span><br><span class="line">spiWrite(<span class="number">0x03</span>);</span><br><span class="line">spiWrite(<span class="number">0x0E</span>);</span><br><span class="line">spiWrite(<span class="number">0x09</span>);</span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_GMCTRN1);  <span class="comment">//Set Gamma</span></span><br><span class="line">spiWrite(<span class="number">0x00</span>);</span><br><span class="line">spiWrite(<span class="number">0x0E</span>);</span><br><span class="line">spiWrite(<span class="number">0x14</span>);</span><br><span class="line">spiWrite(<span class="number">0x03</span>);</span><br><span class="line">spiWrite(<span class="number">0x11</span>);</span><br><span class="line">spiWrite(<span class="number">0x07</span>);</span><br><span class="line">spiWrite(<span class="number">0x31</span>);</span><br><span class="line">spiWrite(<span class="number">0xC1</span>);</span><br><span class="line">spiWrite(<span class="number">0x48</span>);</span><br><span class="line">spiWrite(<span class="number">0x08</span>);</span><br><span class="line">spiWrite(<span class="number">0x0F</span>);</span><br><span class="line">spiWrite(<span class="number">0x0C</span>);</span><br><span class="line">spiWrite(<span class="number">0x31</span>);</span><br><span class="line">spiWrite(<span class="number">0x36</span>);</span><br><span class="line">spiWrite(<span class="number">0x0F</span>);</span><br><span class="line"></span><br><span class="line">writeCommand(ILI9341_SLPOUT);  <span class="comment">//Exit Sleep</span></span><br><span class="line">HAL_Delay(<span class="number">120</span>);</span><br><span class="line">writeCommand(ILI9341_DISPON);  <span class="comment">//Display on</span></span><br><span class="line">HAL_Delay(<span class="number">120</span>);</span><br></pre></td></tr></table></figure>
+
+<p>To be continued.</p>
+
+        </div>
+        
+        
+        
     </div>
 </div>
 
-    
-        
-<div class="card widget">
-    <div class="card-content">
-        <h3 class="tag is-link">
-        2019
-        </h3>
-        <div class="timeline">
-        
-            <article class="media">
-                
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2019-07-06T10:09:31.000Z">2019-07-06</time>
-                        <a href="/2019/07/06/Arch-Linux-Installation/" class="title has-link-black-ter is-size-6 has-text-weight-normal">Arch Linux Installation</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/TECH/">TECH</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        
-            <article class="media">
-                
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2019-04-25T03:04:02.000Z">2019-04-25</time>
-                        <a href="/2019/04/25/ASC19%E5%90%8E%E8%AE%B0/" class="title has-link-black-ter is-size-6 has-text-weight-normal">ASC19后记</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/TRAV/">TRAV</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        
-        </div>
-    </div>
-</div>
+
+
+
+
+
+
+
 
     
-        
-<div class="card widget">
-    <div class="card-content">
-        <h3 class="tag is-link">
-        2018
-        </h3>
-        <div class="timeline">
-        
-            <article class="media">
-                
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2018-04-07T06:58:35.000Z">2018-04-07</time>
-                        <a href="/2018/04/07/build-a-new-blog-via-travis/" class="title has-link-black-ter is-size-6 has-text-weight-normal">使用 Travis CI 自动部署 HEXO 博客到 GitHub</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/TECH/">TECH</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        
-            <article class="media">
-                
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2018-03-04T07:43:55.000Z">2018-03-04</time>
-                        <a href="/2018/03/04/lcd-driver/" class="title has-link-black-ter is-size-6 has-text-weight-normal">STM32驱动LCD屏幕</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/TECH/">TECH</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        
+<div class="card card-transparent">
+    <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+        <div class="pagination-previous">
+            <a class="is-flex-grow has-text-black-ter" href="/page/4/">Previous</a>
         </div>
-    </div>
-</div>
-
-    
-        
-<div class="card widget">
-    <div class="card-content">
-        <h3 class="tag is-link">
-        2017
-        </h3>
-        <div class="timeline">
-        
-            <article class="media">
-                
-                <div class="media-content">
-                    <div class="content">
-                        <time class="has-text-grey is-size-7 is-block is-uppercase" datetime="2017-12-25T13:21:43.000Z">2017-12-25</time>
-                        <a href="/2017/12/25/debugger-1/" class="title has-link-black-ter is-size-6 has-text-weight-normal">简易debug手册</a>
-                        <div class="level article-meta is-mobile">
-                            <div class="level-left">
-                                
-                                <div class="level-item is-size-7 is-uppercase">
-                                <a class="has-link-grey -link" href="/categories/TECH/">TECH</a>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        
+        <div class="pagination-next">
+            <a class="is-flex-grow has-text-black-ter" href="/page/6/">Next</a>
         </div>
-    </div>
+        <ul class="pagination-list is-hidden-mobile">
+            
+            <li><a class="pagination-link has-text-black-ter" href="/">1</a></li>
+            
+            <li><span class="pagination-ellipsis has-text-black-ter">&hellip;</span></li>
+            
+            <li><a class="pagination-link has-text-black-ter" href="/page/4/">4</a></li>
+            
+            <li><a class="pagination-link is-current" href="/page/5/">5</a></li>
+            
+            <li><a class="pagination-link has-text-black-ter" href="/page/6/">6</a></li>
+            
+        </ul>
+    </nav>
 </div>
-
-    
 </div>
                 
 
