@@ -1,12 +1,11 @@
 ---
-title: Debugging手册-Part1
+title: 简易debug手册
 date: 2017-12-25 21:21:43
 categories: TECH
 tags: 
-  - debug
-  - stm32
+  - /tech/debug
 ---
-# Debug手册1
+# Debug手册
 
 > ddl是检验真理的唯一标准
 
