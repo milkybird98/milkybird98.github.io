@@ -3,7 +3,7 @@ title: STM32驱动LCD屏幕
 date: 2018-03-04 15:43:55
 categories: TECH
 tags: 
-  - /tech/stm32
+  - stm32
 ---
 本文中使用的LCD驱动芯片为ili9341，下文中简称为驱动芯片。
 官方的PDF就不摆上来了，自己去这找找就行了[Google](https://www.google.com/ncr)。

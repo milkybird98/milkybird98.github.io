@@ -3,7 +3,7 @@ title: Arch Linux Installation
 date: 2019-07-06 18:09:31
 categories: TECH
 tags: 
-  - /tech/linux
+  - linux
 ---
 >ddl是检验生产力的唯一标准
 

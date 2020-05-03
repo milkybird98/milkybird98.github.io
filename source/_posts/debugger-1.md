@@ -3,7 +3,7 @@ title: 简易debug手册
 date: 2017-12-25 21:21:43
 categories: TECH
 tags: 
-  - /tech/debug
+  - debug
 ---
 # Debug手册
 
